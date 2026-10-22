@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LocalLens — Local Media Gallery</title>
+  <meta name="description" content="Pick any local folder to browse your videos and photos in a beautiful organized gallery." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ══ LANDING SCREEN ══ -->
+  <div id="landing" class="landing">
+    <div class="landing-bg"></div>
+    <div class="landing-card">
+      <div class="landing-icon">🔍</div>
+      <h1 class="landing-title">Local<span class="grad-text">Lens</span></h1>
+      <p class="landing-sub">Pick any folder on your computer to browse<br>your videos and photos in a beautiful gallery.</p>
+      <button id="pickFolder" class="pick-btn">
+        <span class="pick-icon">📁</span> Choose Folder
+      </button>
+      <p class="landing-note">Works offline · No uploads · Your files stay private</p>
+    </div>
+  </div>
+
+  <!-- ══ APP SHELL (hidden until folder picked) ══ -->
+  <div id="app" class="app hidden">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo" id="changeFolderBtn" title="Change folder">
+          <span class="logo-icon">🔍</span>
+          <span class="logo-text">Local<strong>Lens</strong></span>
+          <span class="folder-name" id="folderName"></span>
+        </div>
+
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input id="searchInput" type="text" placeholder="Search by filename…" autocomplete="off" />
+          <button id="clearSearch" class="clear-btn" title="Clear">✕</button>
+        </div>
+
+        <div class="header-actions">
+          <button id="toggleFilters" class="icon-btn" title="Toggle filters">⚙️ Filters</button>
+          <button id="pickFolderAgain" class="icon-btn" title="Change folder">📁 Change Folder</button>
+          <div class="sort-wrap">
+            <select id="sortSelect">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="name_az">Name A→Z</option>
+              <option value="name_za">Name Z→A</option>
+              <option value="size_desc">Largest first</option>
+              <option value="size_asc">Smallest first</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div id="filterBar" class="filter-bar">
+        <!-- Type -->
+        <div class="filter-group">
+          <label class="filter-label">Type</label>
+          <div class="filter-pills" id="typeFilter">
+            <button class="pill active" data-value="all">All</button>
+            <button class="pill" data-value="video">🎬 Video</button>
+            <button class="pill" data-value="image">🖼️ Photo</button>
+          </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="filter-group">
+          <label class="filter-label">Date range</label>
+          <div class="date-range">
+            <input type="month" id="dateFrom" class="date-input" title="From" />
+            <span class="date-sep">→</span>
+            <input type="month" id="dateTo" class="date-input" title="To" />
+          </div>
+        </div>
+
+        <!-- Size -->
+        <div class="filter-group">
+          <label class="filter-label">Min size</label>
+          <div class="filter-pills" id="sizeFilter">
+            <button class="pill active" data-value="0">Any</button>
+            <button class="pill" data-value="1048576">1 MB+</button>
+            <button class="pill" data-value="5242880">5 MB+</button>
+            <button class="pill" data-value="10485760">10 MB+</button>
+            <button class="pill" data-value="26214400">25 MB+</button>
+          </div>
+        </div>
+
+        <!-- Extension -->
+        <div class="filter-group">
+          <label class="filter-label">Extension</label>
+          <div class="filter-pills" id="extFilter">
+            <button class="pill active" data-value="">All</button>
+            <button class="pill" data-value="mp4">MP4</button>
+            <button class="pill" data-value="jpg">JPG</button>
+            <button class="pill" data-value="png">PNG</button>
+            <button class="pill" data-value="mov">MOV</button>
+          </div>
+        </div>
+
+        <!-- Reset -->
+        <button id="resetFilters" class="reset-btn">↺ Reset</button>
+      </div>
+
+      <div class="stats-bar">
+        <span id="statsText">—</span>
+        <span id="loadingSpinner" class="spinner hidden"></span>
+      </div>
+    </header>
+
+    <!-- GALLERY -->
+    <main id="gallery" class="gallery"></main>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-icon">🔍</div>
+      <p>No media matches your filters.</p>
+      <button id="resetFiltersEmpty" class="pick-btn small">Reset Filters</button>
+    </div>
+
+    <!-- SCROLL TO TOP -->
+    <button id="scrollTop" class="scroll-top hidden">↑</button>
+  </div>
+
+  <!-- ══ LIGHTBOX ══ -->
+  <div id="lightbox" class="lightbox hidden">
+    <button id="lbClose" class="lb-btn lb-close">✕</button>
+    <button id="lbPrev"  class="lb-btn lb-prev">‹</button>
+    <button id="lbNext"  class="lb-btn lb-next">›</button>
+    <div class="lb-content">
+      <div id="lbMedia" class="lb-media"></div>
+      <div class="lb-meta">
+        <p id="lbTitle" class="lb-title"></p>
+        <div class="lb-tags">
+          <span id="lbDate"  class="lb-tag tag-purple"></span>
+          <span id="lbSize"  class="lb-tag tag-blue"></span>
+          <span id="lbType"  class="lb-tag tag-pink"></span>
+        </div>
+        <div class="lb-counter" id="lbCounter"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
